@@ -1,0 +1,41 @@
+name: Validate and build dashboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'raw/**.xlsx'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate QlikView exports and build data
+        run: python scripts/build_data.py
+
+      - name: Upload ready-to-serve dashboard artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sales-dashboard-site
+          path: site/
+          if-no-files-found: error
+          retention-days: 30
