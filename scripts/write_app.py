@@ -31,3 +31,33 @@ new="function renderAll(){syncMultiUI();renderKPIs();renderTrend();renderBrandBa
 s=s.replace(old,new)
 p.write_text(s,encoding="utf-8")
 print("site/app.js patched for analytics v2")
+
+
+# HAT_FIX_V3: compact GitHub app uses different source strings than the old embedded dashboard.
+p=Path("site/app.js")
+s=p.read_text(encoding="utf-8")
+
+old_state="const state={year:init,brands:[],months:[],q:'',currency:'rial',scale:'auto',sku:null,raw:'sku',rawPage:1,rawSize:25,rawSort:null,rawDir:1,rankQ:'',rankBrand:'',rankSort:'value',rankDir:-1,rankPage:1,rankSize:25};"
+new_state=old_state+"window.HAT_DATA=D;window.HAT_STATE=state;"
+s=s.replace(old_state,new_state)
+
+old_sc="function sc(v){if(state.scale!=='auto')return +state.scale;v=Math.abs(conv(v));return v>=1e12?1e12:v>=1e9?1e9:v>=1e6?1e6:1}"
+new_sc="function sc(v){const h=state.currency==='toman'?1e12:1e13;if(state.scale==='hemat')return h;if(state.scale!=='auto')return +state.scale;v=Math.abs(conv(v));return v>=h?h:v>=1e9?1e9:v>=1e6?1e6:1}"
+s=s.replace(old_sc,new_sc)
+
+old_name="const scName=x=>x===1e12?'همت':x===1e9?'میلیارد':x===1e6?'میلیون':'';"
+new_name="const scName=x=>x===(state.currency==='toman'?1e12:1e13)?'همت':x===1e9?'میلیارد':x===1e6?'میلیون':'';"
+s=s.replace(old_name,new_name)
+
+old_detail="""function skuDetail(){if(!state.sku){$('#skuDetail').innerHTML='<div class="empty">یک SKU را انتخاب کنید.</div>';return}const[b,n,bc]=state.sku.split('||'),a=srows.filter(r=>r._y===state.year&&r['برند']===b&&r['نام کالا']===n&&r._bc===bc),ms=availMonths(),v=ms.map(m=>sum(a.filter(r=>r['ماه']===m))),t=v.reduce((x,y)=>x+y,0),mx=Math.max(...v,0),bm=ms[v.indexOf(mx)];$('#skuDetail').innerHTML=`<div style="font-weight:800">${esc(n)}</div><div class="panel-sub">${esc(b)} | ${bc}</div><div class="insights" style="margin-top:10px"><div class="insight"><b>جمع فروش</b><p>${money(t)}</p></div><div class="insight"><b>بهترین ماه</b><p>${bm||'—'} | ${money(mx)}</p></div></div>`}"""
+new_detail="""function skuDetail(){if(!state.sku){$('#skuDetail').innerHTML='<div class="empty">یک SKU را انتخاب کنید.</div>';return}const[b,n,bc]=state.sku.split('||'),a=srows.filter(r=>r._y===state.year&&r['برند']===b&&r['نام کالا']===n&&r._bc===bc),ms=availMonths().filter(m=>state.months.includes(m)),v=ms.map(m=>sum(a.filter(r=>r['ماه']===m))),t=v.reduce((x,y)=>x+y,0),mx=Math.max(...v,0),bm=ms[v.indexOf(mx)];$('#skuDetail').innerHTML=`<div style="font-weight:800">${esc(n)}</div><div class="panel-sub">${esc(b)} | <span class="ltr">${esc(bc)}</span></div><div class="insights" style="margin-top:10px;margin-bottom:10px"><div class="insight"><b>جمع فروش</b><p>${money(t)}</p></div><div class="insight"><b>بهترین ماه</b><p>${bm||'—'} | ${money(mx)}</p></div></div><div class="chart-wrap" style="min-height:190px"><svg class="chart-svg" id="skuDetailChart" viewBox="0 0 900 300" style="height:190px"></svg><div class="tooltip" id="skuDetailTooltip"></div></div>`;if(ms.length)lineChart('#skuDetailChart','#skuDetailTooltip',v,ms)}"""
+s=s.replace(old_detail,new_detail)
+
+old_render="function render(){sync();kpis();trend();brands();insights();heat();ranking();skuList();raw()}"
+new_render="function render(){sync();kpis();trend();brands();insights();heat();ranking();skuList();raw();window.dispatchEvent(new CustomEvent('hatfilters'))}"
+s=s.replace(old_render,new_render)
+
+s=s.replace("setup();render();\n})();","setup();render();window.dispatchEvent(new Event('hatready'));\n})();")
+
+p.write_text(s,encoding="utf-8")
+print("site/app.js fixed for analytics initialization, Hemat, and SKU detail trend")
