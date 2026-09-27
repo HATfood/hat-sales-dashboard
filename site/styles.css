@@ -232,3 +232,24 @@ button:focus-visible,select:focus-visible,input:focus-visible,.multi-trigger:foc
 .sku-trend-summary{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .sku-trend-summary .badge{background:#F7F8FA}
 @media (max-width:760px){.sku-toolbar{grid-template-columns:1fr}.sku-list-scroll{max-height:460px}}
+
+
+/* Analytics v2 additions */
+.grid-kpi{grid-template-columns:repeat(4,minmax(160px,1fr))}
+.kpi .value .delta{font-size:10px;vertical-align:middle}
+.muted-text{color:#8A93A0;font-size:10px}
+.positive{color:#467C4D!important}.negative{color:#A84D55!important}
+.data-table.compact{min-width:640px}.data-table.compact th,.data-table.compact td{padding:8px 9px}
+.mini-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:8px}
+.spark-labels{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2px;font-size:8.5px;color:#7B8492;text-align:center;overflow:hidden}
+.spark-labels span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.abc{display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:7px;font-weight:850;font-size:10px}
+.abc-a{background:#EAF7EE;color:#397147}.abc-b{background:#FFF5E8;color:#A26A24}.abc-c{background:#F1F3F6;color:#6F7886}
+.rate-row{display:grid;grid-template-columns:72px minmax(100px,1fr) 64px;gap:8px;align-items:center;padding:8px 3px;border-bottom:1px solid #F0F1F4;font-size:10px}.rate-row:last-child{border-bottom:0}.rate-row>b{text-align:left}.rate-track{height:8px;background:#EEF0F3;border-radius:999px;overflow:hidden}.rate-track i{display:block;height:100%;background:#0A24E9;border-radius:999px}.rate-row:nth-child(even) .rate-track i{background:#5B9FD5}
+.pill{display:inline-flex;padding:3px 7px;border-radius:999px;font-size:8.5px;font-weight:750;white-space:nowrap}.pill.opportunity{background:#EAF7EE;color:#397147}.pill.risk{background:#FCEEEF;color:#A84D55}.pill.star{background:#EEF1FF;color:#0A24E9}.pill.tail{background:#F1F3F6;color:#6F7886}
+.chart-wrap.tall{min-height:360px}.chart-svg.tall{height:360px}
+.chart-point{cursor:pointer}
+#view-growth .rank-card,#view-promo .rank-card,#view-distribution .rank-card{grid-template-columns:34px 1fr minmax(100px,160px)}
+@media (max-width:1320px){.grid-kpi{grid-template-columns:repeat(3,minmax(150px,1fr))}}
+@media (max-width:900px){.grid-kpi{grid-template-columns:repeat(2,minmax(145px,1fr))}.mini-kpis{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.grid-kpi{grid-template-columns:1fr}.mini-kpis{grid-template-columns:1fr}.rate-row{grid-template-columns:60px 1fr 54px}}
