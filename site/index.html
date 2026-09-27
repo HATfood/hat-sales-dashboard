@@ -9,7 +9,6 @@
 </head>
 <body>
 <div id="startupError" style="display:none;margin:18px;padding:16px;background:#fff;border:1px solid #e5e8ee;border-radius:12px;color:#9b1c31"></div>
-
 <div class="app" id="app">
   <aside class="sidebar" aria-label="ناوبری گزارش">
     <div class="brand-lockup">
@@ -19,18 +18,19 @@
     <div class="nav-label">گزارش‌ها</div>
     <nav class="tabs" aria-label="بخش‌های داشبورد">
       <button class="tab active" data-view="overview" type="button">نمای کلی</button>
-      <button class="tab" data-view="brands" type="button">تحلیل برندها</button>
+      <button class="tab" data-view="growth" type="button">رشد و مقایسه</button>
+      <button class="tab" data-view="brands" type="button">برند و دسته</button>
       <button class="tab" data-view="skus" type="button">تحلیل SKU</button>
+      <button class="tab" data-view="promo" type="button">تخفیف و برگشتی</button>
+      <button class="tab" data-view="distribution" type="button">توزیع و بهره‌وری</button>
+      <button class="tab" data-view="daily" type="button">روند روزانه</button>
       <button class="tab" data-view="raw" type="button">داده خام</button>
     </nav>
     <div class="sidebar-status"><small>آخرین داده ثبت‌شده</small><b id="sidebarLatest">در حال بارگذاری...</b><span id="sidebarLatestNote"></span></div>
   </aside>
   <div class="workspace">
     <header class="topbar">
-      <div class="title">
-        <h1>داشبورد تحلیل فروش</h1>
-        <p id="headerSubtitle">فروش خالص پس از برگشتی</p>
-      </div>
+      <div class="title"><h1>داشبورد تحلیل فروش</h1><p id="headerSubtitle">فروش خالص پس از برگشتی</p></div>
       <div class="badges">
         <span class="badge live" id="dataAsOfBadge">در حال بارگذاری</span>
         <span class="badge" id="dataRowsBadge"></span>
@@ -38,116 +38,96 @@
         <span class="badge">مبنای داده: ریال</span>
       </div>
     </header>
-<section class="controls" aria-label="فیلترهای داشبورد">
-    <div class="control"><label for="yearFilter">سال</label><select id="yearFilter"></select></div>
-    <div class="control">
-      <label for="brandFilter">برند (چندانتخابی)</label>
-      <div class="multi-select" id="brandMulti">
-        <button class="multi-trigger" id="brandFilter" type="button" aria-haspopup="true" aria-expanded="false"><span class="multi-label" id="brandFilterLabel">همه برندها</span><span class="chev">▼</span></button>
-        <div class="multi-menu" id="brandMenu" hidden></div>
-      </div>
-    </div>
-    <div class="control">
-      <label for="monthFilter">ماه (چندانتخابی)</label>
-      <div class="multi-select" id="monthMulti">
-        <button class="multi-trigger" id="monthFilter" type="button" aria-haspopup="true" aria-expanded="false"><span class="multi-label" id="monthFilterLabel">سال تا تاریخ</span><span class="chev">▼</span></button>
-        <div class="multi-menu" id="monthMenu" hidden></div>
-      </div>
-    </div>
-    <div class="control"><label for="skuSearch">جست‌وجوی SKU / نام کالا / بارکد</label><input id="skuSearch" placeholder="مثلاً کاراک، 626..." autocomplete="off"></div>
-    <div class="control"><label for="currencyFilter">واحد پول</label><select id="currencyFilter"><option value="rial">ریال (منبع)</option><option value="toman">تومان</option></select></div>
-    <div class="control"><label for="scaleFilter">خوانایی مبلغ</label><select id="scaleFilter"><option value="auto">خودکار (پیشنهادی)</option><option value="1000000000000">همت</option><option value="1000000000">میلیارد</option><option value="1000000">میلیون</option><option value="1">عدد کامل</option></select></div>
-    <button class="btn soft" id="resetBtn" type="button">پاک‌کردن فیلترها</button>
-  </section>
-<main>
-    <section class="view active" id="view-overview">
-      <div class="grid-kpi" id="kpis"></div>
-      <div class="layout2">
-        <div class="panel">
-          <div class="panel-head"><div><div class="panel-title">روند فروش ماهانه</div><div class="panel-sub" id="trendSubtitle"></div></div><div class="panel-actions"><span class="badge" id="trendScope"></span></div></div>
-          <div class="chart-wrap"><svg class="chart-svg" id="trendChart" viewBox="0 0 900 315" role="img" aria-label="نمودار روند فروش ماهانه"></svg><div class="tooltip" id="trendTooltip"></div></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><div><div class="panel-title">رتبه‌بندی برندها</div><div class="panel-sub" id="brandRankSubtitle"></div></div></div>
-          <div class="bar-list" id="brandBars"></div>
-        </div>
-      </div>
-      <div class="layout3">
-        <div class="panel">
-          <div class="panel-head"><div><div class="panel-title">سهم برندها</div><div class="panel-sub">کلیک روی برند، فیلتر برند را فعال می‌کند</div></div></div>
-          <div class="donut-wrap"><div class="donut" id="donut"><div class="donut-center"><b id="donutValue"></b><span>کل بازه</span></div></div><div class="legend" id="donutLegend"></div></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><div><div class="panel-title">بینش‌های کلیدی</div><div class="panel-sub">محاسبه خودکار بر اساس فیلترهای فعال</div></div></div>
-          <div class="insights" id="insights"></div>
-        </div>
-      </div>
+
+    <section class="controls" aria-label="فیلترهای داشبورد">
+      <div class="control"><label for="yearFilter">سال</label><select id="yearFilter"></select></div>
+      <div class="control"><label for="brandFilter">برند (چندانتخابی)</label><div class="multi-select" id="brandMulti"><button class="multi-trigger" id="brandFilter" type="button" aria-haspopup="true" aria-expanded="false"><span class="multi-label" id="brandFilterLabel">همه برندها</span><span class="chev">▼</span></button><div class="multi-menu" id="brandMenu" hidden></div></div></div>
+      <div class="control"><label for="monthFilter">ماه (چندانتخابی)</label><div class="multi-select" id="monthMulti"><button class="multi-trigger" id="monthFilter" type="button" aria-haspopup="true" aria-expanded="false"><span class="multi-label" id="monthFilterLabel">سال تا تاریخ</span><span class="chev">▼</span></button><div class="multi-menu" id="monthMenu" hidden></div></div></div>
+      <div class="control"><label for="skuSearch">جست‌وجوی SKU / نام کالا / بارکد</label><input id="skuSearch" placeholder="مثلاً کاراک، 626..." autocomplete="off"></div>
+      <div class="control"><label for="currencyFilter">واحد پول</label><select id="currencyFilter"><option value="rial">ریال (منبع)</option><option value="toman">تومان</option></select></div>
+      <div class="control"><label for="scaleFilter">خوانایی مبلغ</label><select id="scaleFilter"><option value="auto">خودکار</option><option value="hemat">همت</option><option value="1000000000">میلیارد</option><option value="1000000">میلیون</option><option value="1">عدد کامل</option></select></div>
+      <button class="btn soft" id="resetBtn" type="button">پاک‌کردن فیلترها</button>
     </section>
 
-    <section class="view" id="view-brands">
-      <div class="panel" style="margin-bottom:12px">
-        <div class="panel-head"><div><div class="panel-title">Heatmap فروش برند × ماه</div><div class="panel-sub">شدت رنگ نسبت به بیشترین فروش در کل ماتریس است. روی هر سلول کلیک کنید.</div></div></div>
-        <div class="heat-wrap" id="heatmap"></div>
-      </div>
-      <div class="layout3">
-        <div class="panel"><div class="panel-head"><div><div class="panel-title">رتبه برندها در بازه انتخابی</div><div class="panel-sub">مبنای رتبه: فروش خالص پس از برگشتی</div></div></div><div id="brandRanking"></div></div>
-        <div class="panel"><div class="panel-head"><div><div class="panel-title">مقایسه ماه به ماه</div><div class="panel-sub">درصد تغییر هر برند نسبت به ماه قبل</div></div></div><div id="momTable"></div></div>
-      </div>
-    </section>
+    <main>
+      <section class="view active" id="view-overview">
+        <div class="grid-kpi" id="kpis"></div>
+        <div class="layout2">
+          <div class="panel">
+            <div class="panel-head"><div><div class="panel-title">روند فروش ماهانه</div><div class="panel-sub" id="trendSubtitle"></div></div><div class="panel-actions"><span class="badge" id="trendScope"></span></div></div>
+            <div class="chart-wrap"><svg class="chart-svg" id="trendChart" viewBox="0 0 900 315"></svg><div class="tooltip" id="trendTooltip"></div></div>
+          </div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">رتبه‌بندی برندها</div><div class="panel-sub" id="brandRankSubtitle"></div></div></div><div class="bar-list" id="brandBars"></div></div>
+        </div>
+        <div class="layout3">
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">سهم برندها</div><div class="panel-sub">کلیک روی برند، فیلتر برند را فعال می‌کند</div></div></div><div class="donut-wrap"><div class="donut" id="donut"><div class="donut-center"><b id="donutValue"></b><span>کل بازه</span></div></div><div class="legend" id="donutLegend"></div></div></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">بینش‌های کلیدی</div><div class="panel-sub">بر اساس فیلترهای فعال و داده واقعی</div></div></div><div class="insights" id="insights"></div></div>
+        </div>
+      </section>
 
-    <section class="view" id="view-skus">
-      <div class="panel sku-trend-panel">
-        <div class="panel-head">
-          <div><div class="panel-title">روند ماهانه همه SKUها</div><div class="panel-sub" id="skuTrendSubtitle">مجموع فروش همه محصولات منطبق با فیلترهای فعال در هر ماه</div></div>
-          <div class="sku-trend-summary"><span class="badge" id="skuTrendCount"></span><span class="badge" id="skuTrendScale"></span></div>
+      <section class="view" id="view-growth">
+        <div class="grid-kpi" id="growthKpis"></div>
+        <div class="layout2">
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">مقایسه ماهانه با سال قبل</div><div class="panel-sub" id="yoyChartSubtitle"></div></div></div><div class="chart-wrap"><svg class="chart-svg" id="yoyChart" viewBox="0 0 900 315"></svg><div class="tooltip" id="yoyTooltip"></div></div></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">منشأ تغییر فروش</div><div class="panel-sub">تفکیک تقریبی اثر قیمت، حجم/میکس و تغییر سبد SKU</div></div></div><div id="growthDecomp"></div></div>
         </div>
-        <div class="chart-wrap"><svg class="chart-svg" id="skuTrendChart" viewBox="0 0 900 300" role="img" aria-label="روند ماهانه همه SKUها"></svg><div class="tooltip" id="skuTrendTooltip"></div></div>
-      </div>
+        <div class="layout3">
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">رشد برندها نسبت به سال قبل</div><div class="panel-sub">فروش، تعداد و وزن برای ماه‌های قابل مقایسه</div></div></div><div id="growthBrandTable"></div></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">رشد دسته‌ها نسبت به سال قبل</div><div class="panel-sub">سطح چهار کالاها</div></div></div><div id="growthCategoryTable"></div></div>
+        </div>
+      </section>
 
-      <div class="layout2">
-        <div class="panel">
-          <div class="panel-head"><div><div class="panel-title">رتبه همه SKUها</div><div class="panel-sub" id="skuTopSubtitle"></div></div><button class="btn" id="exportSkuBtn" type="button">خروجی CSV فیلترشده</button></div>
-          <div class="sku-list-scroll"><div class="bar-list" id="skuBars"></div></div>
+      <section class="view" id="view-brands">
+        <div class="panel" style="margin-bottom:10px"><div class="panel-head"><div><div class="panel-title">Heatmap فروش برند × ماه</div><div class="panel-sub">شدت رنگ نسبت به بیشترین فروش در ماتریس</div></div></div><div class="heat-wrap" id="heatmap"></div></div>
+        <div class="layout3">
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">رتبه برندها در بازه انتخابی</div><div class="panel-sub">فروش خالص پس از برگشتی</div></div></div><div id="brandRanking"></div></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">مقایسه ماه به ماه</div><div class="panel-sub">آخرین ماه انتخاب‌شده در برابر ماه قبل</div></div></div><div id="momTable"></div></div>
         </div>
-        <div class="panel">
-          <div class="panel-head"><div><div class="panel-title">جزئیات SKU انتخاب‌شده</div><div class="panel-sub">برای مشاهده روند اختصاصی، روی یکی از SKUها کلیک کنید</div></div></div>
-          <div id="skuDetail"><div class="empty">یک SKU را انتخاب کنید.</div></div>
+        <div class="layout3">
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">دسته‌های سطح سه</div><div class="panel-sub">سهم فروش و وزن</div></div></div><div id="categoryL3"></div></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">دسته‌های سطح چهار</div><div class="panel-sub">رتبه‌بندی جزئی‌تر سبد</div></div></div><div id="categoryL4"></div></div>
         </div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div><div class="panel-title">جدول رتبه‌بندی SKUها</div><div class="panel-sub">فیلتر و سورت این جدول مستقل از فیلترهای اصلی داشبورد است و روی نتیجه فعلی اعمال می‌شود.</div></div></div>
-        <div class="sku-toolbar">
-          <div class="control"><label for="skuRankSearch">فیلتر نام کالا / بارکد</label><input id="skuRankSearch" placeholder="جست‌وجو در جدول SKU..." autocomplete="off"></div>
-          <div class="control"><label for="skuRankBrand">برند در جدول</label><select id="skuRankBrand"><option value="">همه برندهای انتخاب‌شده</option></select></div>
-          <div class="control"><label for="skuRankPageSize">تعداد ردیف</label><select id="skuRankPageSize"><option value="25">۲۵</option><option value="50">۵۰</option><option value="100">۱۰۰</option><option value="all">همه</option></select></div>
-        </div>
-        <div class="table-wrap"><table class="data-table" id="skuRankTable"><thead><tr>
-          <th class="sku-sort" data-sku-sort="rank"># <span class="sort-mark">↕</span></th>
-          <th class="sku-sort" data-sku-sort="brand">برند <span class="sort-mark">↕</span></th>
-          <th class="sku-sort" data-sku-sort="name">نام کالا <span class="sort-mark">↕</span></th>
-          <th class="sku-sort" data-sku-sort="barcode">بارکد <span class="sort-mark">↕</span></th>
-          <th class="num sku-sort active" data-sku-sort="value">فروش <span class="sort-mark">↓</span></th>
-          <th class="num sku-sort" data-sku-sort="share">سهم از بازه <span class="sort-mark">↕</span></th>
-        </tr></thead><tbody id="skuRankBody"></tbody></table></div>
-        <div class="sku-table-meta"><div class="info" id="skuRankInfo"></div><div class="pager-buttons"><button class="smallbtn" id="skuRankPrev" type="button">قبلی</button><button class="smallbtn" id="skuRankNext" type="button">بعدی</button></div></div>
-      </div>
-    </section>
+      </section>
 
-    <section class="view" id="view-raw">
-      <div class="panel">
-        <div class="panel-head">
-          <div><div class="panel-title">داده خام</div><div class="panel-sub">داده پردازش‌شده از فایل خام QlikView</div></div>
-          <div class="panel-actions"><div class="source-switch"><button type="button" class="active" data-source="sku">داده SKU</button><button type="button" data-source="brand">خلاصه برند</button></div><button class="btn primary" id="exportRawBtn" type="button">دانلود CSV</button></div>
+      <section class="view" id="view-skus">
+        <div class="panel sku-trend-panel"><div class="panel-head"><div><div class="panel-title">روند ماهانه همه SKUها</div><div class="panel-sub" id="skuTrendSubtitle"></div></div><div class="sku-trend-summary"><span class="badge" id="skuTrendCount"></span><span class="badge" id="skuTrendScale"></span></div></div><div class="chart-wrap"><svg class="chart-svg" id="skuTrendChart" viewBox="0 0 900 300"></svg><div class="tooltip" id="skuTrendTooltip"></div></div></div>
+        <div class="layout2">
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">رتبه همه SKUها</div><div class="panel-sub" id="skuTopSubtitle"></div></div><button class="btn" id="exportSkuBtn" type="button">خروجی CSV فیلترشده</button></div><div class="sku-list-scroll"><div class="bar-list" id="skuBars"></div></div></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">جزئیات SKU انتخاب‌شده</div><div class="panel-sub">روند، سهم و وضعیت نسبت به سال قبل</div></div></div><div id="skuDetail"><div class="empty">یک SKU را انتخاب کنید.</div></div></div>
         </div>
-        <div class="note" id="rawNote"></div>
-        <div class="table-wrap" style="margin-top:12px"><table class="data-table" id="rawTable"><thead id="rawHead"></thead><tbody id="rawBody"></tbody></table></div>
-        <div class="pager"><div class="info" id="pagerInfo"></div><div class="pager-buttons"><button class="smallbtn" id="prevPage" type="button">قبلی</button><button class="smallbtn" id="nextPage" type="button">بعدی</button></div></div>
-      </div>
-    </section>
-  </main>
+        <div class="panel"><div class="panel-head"><div><div class="panel-title">جدول رتبه‌بندی SKUها</div><div class="panel-sub">سورت، فیلتر مستقل و طبقه‌بندی ABC</div></div></div><div class="sku-toolbar"><div class="control"><label for="skuRankSearch">فیلتر نام کالا / بارکد</label><input id="skuRankSearch" placeholder="جست‌وجو در جدول SKU..." autocomplete="off"></div><div class="control"><label for="skuRankBrand">برند در جدول</label><select id="skuRankBrand"><option value="">همه برندهای انتخاب‌شده</option></select></div><div class="control"><label for="skuRankPageSize">تعداد ردیف</label><select id="skuRankPageSize"><option value="25">۲۵</option><option value="50">۵۰</option><option value="100">۱۰۰</option><option value="all">همه</option></select></div></div><div class="table-wrap"><table class="data-table" id="skuRankTable"><thead><tr><th class="sku-sort" data-sku-sort="rank"># <span class="sort-mark">↕</span></th><th class="sku-sort" data-sku-sort="abc">ABC <span class="sort-mark">↕</span></th><th class="sku-sort" data-sku-sort="brand">برند <span class="sort-mark">↕</span></th><th class="sku-sort" data-sku-sort="name">نام کالا <span class="sort-mark">↕</span></th><th class="sku-sort" data-sku-sort="barcode">بارکد <span class="sort-mark">↕</span></th><th class="num sku-sort active" data-sku-sort="value">فروش <span class="sort-mark">↓</span></th><th class="num sku-sort" data-sku-sort="share">سهم <span class="sort-mark">↕</span></th><th class="num sku-sort" data-sku-sort="yoy">YoY <span class="sort-mark">↕</span></th></tr></thead><tbody id="skuRankBody"></tbody></table></div><div class="sku-table-meta"><div class="info" id="skuRankInfo"></div><div class="pager-buttons"><button class="smallbtn" id="skuRankPrev" type="button">قبلی</button><button class="smallbtn" id="skuRankNext" type="button">بعدی</button></div></div></div>
+      </section>
+
+      <section class="view" id="view-promo">
+        <div class="grid-kpi" id="promoKpis"></div>
+        <div class="layout3">
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">روند شدت تخفیف</div><div class="panel-sub">مبلغ تخفیف ÷ فروش خالص پس از برگشتی</div></div></div><div id="discountTrend"></div></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">روند نرخ برگشتی</div><div class="panel-sub">مبلغ برگشتی ÷ مبلغ فروش خالص قبل از برگشتی</div></div></div><div id="returnTrend"></div></div>
+        </div>
+        <div class="panel"><div class="panel-head"><div><div class="panel-title">تحلیل برند: فروش، تخفیف و برگشتی</div><div class="panel-sub">برای تشخیص رشد وابسته به تخفیف یا ریسک برگشتی</div></div></div><div id="promoBrandTable"></div></div>
+      </section>
+
+      <section class="view" id="view-distribution">
+        <div class="grid-kpi" id="distKpis"></div>
+        <div class="layout2">
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">فرصت‌های توسعه توزیع</div><div class="panel-sub">SKUهای با فروش به ازای Store-SKU-Day بالا و توزیع پایین‌تر</div></div></div><div id="distributionOpportunities"></div></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">ریسک بهره‌وری توزیع</div><div class="panel-sub">توزیع بالا ولی فروش به ازای Store-SKU-Day پایین‌تر</div></div></div><div id="distributionRisks"></div></div>
+        </div>
+        <div class="panel"><div class="panel-head"><div><div class="panel-title">جدول بهره‌وری توزیع SKU</div><div class="panel-sub">«تعداد فروشگاه» در داده QV در سطح SKU-Day است و جمع آن Unique Store نیست.</div></div></div><div id="distributionTable"></div></div>
+      </section>
+
+      <section class="view" id="view-daily">
+        <div class="grid-kpi" id="dailyKpis"></div>
+        <div class="panel" style="margin-bottom:10px"><div class="panel-head"><div><div class="panel-title">فروش روزانه و میانگین متحرک ۷روزه</div><div class="panel-sub" id="dailySubtitle"></div></div></div><div class="chart-wrap tall"><svg class="chart-svg tall" id="dailyChart" viewBox="0 0 1000 360"></svg><div class="tooltip" id="dailyTooltip"></div></div></div>
+        <div class="layout3"><div class="panel"><div class="panel-head"><div><div class="panel-title">روزهای اوج فروش</div><div class="panel-sub">بالاترین فروش روزانه در فیلتر فعلی</div></div></div><div id="dailyTopDays"></div></div><div class="panel"><div class="panel-head"><div><div class="panel-title">روزهای ضعیف فروش</div><div class="panel-sub">برای تشخیص افت‌های غیرعادی</div></div></div><div id="dailyLowDays"></div></div></div>
+      </section>
+
+      <section class="view" id="view-raw">
+        <div class="panel"><div class="panel-head"><div><div class="panel-title">داده پردازش‌شده</div><div class="panel-sub">خروجی استانداردشده از فایل خام QlikView</div></div><div class="panel-actions"><div class="source-switch"><button type="button" class="active" data-source="sku">داده SKU</button><button type="button" data-source="brand">خلاصه برند</button></div><button class="btn primary" id="exportRawBtn" type="button">دانلود CSV</button></div></div><div class="note" id="rawNote"></div><div class="table-wrap" style="margin-top:10px"><table class="data-table" id="rawTable"><thead id="rawHead"></thead><tbody id="rawBody"></tbody></table></div><div class="pager"><div class="info" id="pagerInfo"></div><div class="pager-buttons"><button class="smallbtn" id="prevPage" type="button">قبلی</button><button class="smallbtn" id="nextPage" type="button">بعدی</button></div></div></div>
+      </section>
+    </main>
   </div>
 </div>
-
 <script src="app.js" defer></script>
 </body>
 </html>
