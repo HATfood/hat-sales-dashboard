@@ -1,6 +1,7 @@
-(function(){
+(function boot(){
 'use strict';
-const D=window.HAT_DATA,S=window.HAT_STATE;if(!D||!S)return;
+if(!window.HAT_DATA||!window.HAT_STATE){window.addEventListener('hatready',boot,{once:true});return}
+const D=window.HAT_DATA,S=window.HAT_STATE;
 const $=s=>document.querySelector(s);
 const F={net:'مبلغ فروش خالص پس از برگشتی',sales:'مبلغ فروش خالص',qty:'تعداد کالای فروش پس از برگشتی',weight:'وزن فروش رفته پس از برگشتی',discount:'مبلغ تخفیفات فروش',returns:'مبلغ خالص برگشتی',salesQty:'مجموع تعداد کالای فروش',returnQty:'تعداد کالاهای برگشتی',stores:'تعداد فروشگاه',brand:'برند',name:'نام کالا',bc:'بارکد',month:'ماه',mno:'شماره ماه',year:'سال',c3:'سطح سه کالاها',c4:'سطح چهار کالاها'};
 const months=D.meta.months,mdays=[31,31,31,31,31,31,30,30,30,30,30,29],mi=Object.fromEntries(months.map((m,i)=>[m,i]));
