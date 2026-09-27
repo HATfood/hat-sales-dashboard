@@ -9,3 +9,9 @@ for path,b64 in FILES.items():
     p=Path(path); p.parent.mkdir(parents=True,exist_ok=True)
     p.write_bytes(gzip.decompress(base64.b64decode(b64)))
     print(f"generated {path} ({p.stat().st_size} bytes)")
+
+idx=Path("site/index.html")
+s=idx.read_text(encoding="utf-8")
+s=s.replace('href="styles.css"','href="styles.css?v=ux3"').replace('src="app.js"','src="app.js?v=ux3"')
+idx.write_text(s,encoding="utf-8")
+print("cache-busted dashboard assets")
