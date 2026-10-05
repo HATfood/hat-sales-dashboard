@@ -15,3 +15,86 @@ import re
 html=re.sub(r'href="styles\.css(?:\?v=[^"]*)?"', 'href="styles.css?v=20261005-2"', html)
 idx.write_text(html,encoding="utf-8")
 print("using source-managed site/styles.css")
+
+
+# FILTERS_V1_CATEGORY_AND_YEAR_FORMAT
+# Apply small UI/data-filter patches after generating the canonical app bundle.
+idx=Path("site/index.html")
+html=idx.read_text(encoding="utf-8")
+brand_filter='''<div class="filter wide"><label>برند</label><select id="brandFilter"><option value="">همه برندها</option></select></div>'''
+category_filter='''<div class="filter wide"><label>دسته محصولی</label><select id="categoryFilter"><option value="">همه دسته‌ها</option><option value="چای خارجی">چای خارجی</option><option value="چای ایرانی">چای ایرانی</option><option value="ادویه">ادویه</option><option value="نمک">نمک</option><option value="پودر نوشیدنی">پودر نوشیدنی</option><option value="دمنوش">دمنوش</option></select></div>'''
+if category_filter not in html:
+    html=html.replace(brand_filter, category_filter + brand_filter)
+html=html.replace('app.js?v=ux4','app.js?v=ux5')
+html=re.sub(r'href="styles\.css(?:\?v=[^"]*)?"', 'href="styles.css?v=20261005-3"', html)
+idx.write_text(html,encoding="utf-8")
+
+app=Path("site/app.js")
+s=app.read_text(encoding="utf-8")
+
+# Year display: Persian digits without thousands grouping.
+s=s.replace(
+    "const fa=n=>Number(n).toLocaleString('fa-IR');",
+    "const fa=n=>Number(n).toLocaleString('fa-IR');\nconst faYear=n=>Number(n).toLocaleString('fa-IR',{useGrouping:false,maximumFractionDigits:0});"
+)
+for old,new in [
+    ("fa(state.year)","faYear(state.year)"),
+    ("fa(py)","faYear(py)"),
+    ("fa(y)","faYear(y)"),
+    ("fa(x.year)","faYear(x.year)")
+]:
+    s=s.replace(old,new)
+
+# Add normalized six-category filter state.
+s=s.replace(
+    "const state={year:null,from:0,to:5,brand:'',q:'',currency:'toman'",
+    "const state={year:null,from:0,to:5,brand:'',category:'',q:'',currency:'toman'"
+)
+
+category_helpers="""function productCategory(c3,c4){
+  c3=String(c3||'').trim();c4=String(c4||'').trim();
+  if(c4.includes('نمک')||c3.includes('نمک'))return 'نمک';
+  if(c3.includes('چای سیاه خارجی')||c4.includes('چای خارجی'))return 'چای خارجی';
+  if(c3.includes('چای سیاه ایرانی')||c4.includes('چای ایرانی'))return 'چای ایرانی';
+  if(c3.includes('دمنوش')||c4.includes('دمنوش'))return 'دمنوش';
+  if(c3.includes('پودر نوشیدنی')||c4.includes('پودر نوشیدنی'))return 'پودر نوشیدنی';
+  if(c3.includes('ادویه')||c4.includes('ادویه')||c3.includes('سبزیجات خشک'))return 'ادویه';
+  return '';
+}
+function rowCategory(r){return productCategory(r[F.c3],r[F.c4])}
+"""
+anchor="function sourceHas(col,y=state.year){return !!ymeta(y)?.source?.columns?.includes(col)}\n"
+if "function productCategory(c3,c4)" not in s:
+    s=s.replace(anchor,anchor+category_helpers)
+
+s=s.replace(
+    "if(!ignoreBrand&&state.brand&&r[F.brand]!==state.brand)return false;if(state.q)",
+    "if(!ignoreBrand&&state.brand&&r[F.brand]!==state.brand)return false;if(state.category&&rowCategory(r)!==state.category)return false;if(state.q)"
+)
+
+# Category UI events, reset behavior, and context.
+s=s.replace(
+    "$('#brandFilter').addEventListener('change',e=>{state.brand=e.target.value;renderAll()});",
+    "$('#categoryFilter').addEventListener('change',e=>{state.category=e.target.value;state.brand='';refreshBrands();renderAll()});\n  $('#brandFilter').addEventListener('change',e=>{state.brand=e.target.value;renderAll()});"
+)
+s=s.replace(
+    "state.brand='';state.q='';$('#fromMonth').value=0;$('#toMonth').value=state.to;$('#brandFilter').value='';$('#searchFilter').value='';renderAll()",
+    "state.brand='';state.category='';state.q='';$('#fromMonth').value=0;$('#toMonth').value=state.to;$('#categoryFilter').value='';$('#brandFilter').value='';$('#searchFilter').value='';refreshBrands();renderAll()"
+)
+s=s.replace(
+    "function refreshBrands(){const b=[...new Set(rows.filter(r=>r._y===state.year).map(r=>r[F.brand]))]",
+    "function refreshBrands(){const b=[...new Set(rows.filter(r=>r._y===state.year&&(!state.category||rowCategory(r)===state.category)).map(r=>r[F.brand]))]"
+)
+s=s.replace(
+    "${periodLabel()} ${faYear(state.year)}${state.brand?' • '+state.brand:''}",
+    "${periodLabel()} ${faYear(state.year)}${state.category?' • '+state.category:''}${state.brand?' • '+state.brand:''}"
+)
+
+# Daily data uses short keys c3/c4, so apply the same category mapping there.
+s=s.replace(
+    "state.daily.filter(r=>ms.includes(r.m)&&(!state.brand||r.b===state.brand)&&(!q||",
+    "state.daily.filter(r=>ms.includes(r.m)&&(!state.brand||r.b===state.brand)&&(!state.category||productCategory(r.c3,r.c4)===state.category)&&(!q||"
+)
+
+app.write_text(s,encoding="utf-8")
+print("applied category filter and ungrouped Persian year formatting")
