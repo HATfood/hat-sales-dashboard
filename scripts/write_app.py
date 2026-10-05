@@ -12,6 +12,6 @@ for path,b64 in FILES.items():
 idx=Path("site/index.html")
 html=idx.read_text(encoding="utf-8")
 import re
-html=re.sub(r'href="styles\.css(?:\?v=[^"]*)?"', 'href="styles.css?v=20261005-1"', html)
+html=re.sub(r'href="styles\.css(?:\?v=[^"]*)?"', 'href="styles.css?v=20261005-2"', html)
 idx.write_text(html,encoding="utf-8")
 print("using source-managed site/styles.css")
