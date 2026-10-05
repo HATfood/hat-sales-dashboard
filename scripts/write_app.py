@@ -98,3 +98,42 @@ s=s.replace(
 
 app.write_text(s,encoding="utf-8")
 print("applied category filter and ungrouped Persian year formatting")
+
+
+# PARTIAL_MONTH_VISIBILITY_FIX
+# Current-period actuals must include the partial latest month (e.g. Mehr to day 10).
+# Only YoY deltas use completed comparable months because 1404 daily data is unreliable.
+app=Path("site/app.js")
+s=app.read_text(encoding="utf-8")
+
+old_banner="""function updateContext(){const x=ymeta();$('#sideLatest').textContent=x?`${fa(x.latest_day)} ${x.latest_month} ${faYear(x.year)}`:'—';$('#sideRows').textContent=x?`${fa(x.detail_rows)} رکورد روزانه • ${fa(x.sku_count)} SKU`:'';$('#periodText').textContent=`${periodLabel()} ${faYear(state.year)}${state.category?' • '+state.category:''}${state.brand?' • '+state.brand:''}`;const py=previousYear(),cm=comparableMonths(),partial=selectedMonths().some(m=>isPartialMonth(state.year,m));$('#comparisonBanner').innerHTML=`<b>بازه تحلیل:</b> ${periodLabel()} ${faYear(state.year)} &nbsp; <span>•</span> &nbsp; <b>مبنای YoY:</b> ${py&&cm.length?comparisonLabel():'در دسترس نیست'}${partial?' &nbsp; <span class="negative">• ماه ناقص از YoY حذف شده است</span>':''}`;$('#qualityStatus').textContent='Data validated';}"""
+new_banner="""function updateContext(){const x=ymeta();$('#sideLatest').textContent=x?`${fa(x.latest_day)} ${x.latest_month} ${faYear(x.year)}`:'—';$('#sideRows').textContent=x?`${fa(x.detail_rows)} رکورد روزانه • ${fa(x.sku_count)} SKU`:'';$('#periodText').textContent=`${periodLabel()} ${faYear(state.year)}${state.category?' • '+state.category:''}${state.brand?' • '+state.brand:''}`;const py=previousYear(),cm=comparableMonths(),partial=selectedMonths().some(m=>isPartialMonth(state.year,m)),partialText=partial&&x?` (داده ${x.latest_month} تا روز ${fa(x.latest_day)})`:'';$('#comparisonBanner').innerHTML=`<b>بازه تحلیل جاری:</b> ${periodLabel()} ${faYear(state.year)}${partialText} &nbsp; <span>•</span> &nbsp; <b>مبنای YoY:</b> ${py&&cm.length?comparisonLabel():'در دسترس نیست'}${partial?' &nbsp; <span class="negative">• ماه ناقص فقط از مقایسه YoY حذف شده، نه از داده جاری</span>':''}`;$('#qualityStatus').textContent='Data validated';}"""
+s=s.replace(old_banner,new_banner)
+
+old_kpi="""function kpiCard(label,cur,prev,metric,meta=''){const growth=prev?cur/prev-1:null;return `<div class="kpi"><div class="k-label">${label}</div><div class="k-value">${compactValue(cur,metric)}</div><div class="k-meta">${prev!=null?`${deltaChip(growth)} &nbsp; قبل: ${compactValue(prev,metric)}`:meta||'بدون مبنای مقایسه'}</div></div>`}"""
+new_kpi=old_kpi+"""
+function kpiActualCard(label,actual,compareCur,prev,metric,compareLabelText=''){const growth=prev?compareCur/prev-1:null;return `<div class="kpi"><div class="k-label">${label}</div><div class="k-value">${compactValue(actual,metric)}</div><div class="k-meta">${prev?`${deltaChip(growth)} &nbsp; YoY ${compareLabelText}`:'بدون مبنای مقایسه'}</div></div>`}"""
+s=s.replace(old_kpi,new_kpi)
+
+old_overview="""function renderOverview(){
+ const py=previousYear(),cm=comparableMonths(),cur=filtered(state.year,cm.length?cm:selectedMonths()),pre=py?filtered(py,cm):[];
+ const cs=sum(cur,F.sales),ps=sum(pre,F.sales),cq=sum(cur,F.qty),pq=sum(pre,F.qty),cw=sum(cur,F.weight),pw=sum(pre,F.weight),cv=cw?cs/cw:0,pv=pw?ps/pw:0;
+ const discount=sourceHas(F.discount)?sum(cur,F.discount):null,returns=sourceHas(F.returns)?sum(cur,F.returns):null,gross=sourceHas(F.gross)?sum(cur,F.gross):null;
+ $('#execKpis').innerHTML=[kpiCard('فروش خالص',cs,ps,'sales'),kpiCard('تعداد خالص',cq,pq,'qty'),kpiCard('وزن خالص',cw,pw,'weight'),kpiCard('ارزش فروش هر کیلو',cv,pv,'valuekg'),kpiCard('شدت تخفیف',discount!=null?safe(discount,cs):0,null,'qty',discount!=null?pctx(safe(discount,cs)):'داده ندارد'),kpiCard('نرخ برگشتی',returns!=null?safe(returns,gross):0,null,'qty',returns!=null?pctx(safe(returns,gross)):'داده ندارد')].join('');
+ // overwrite rate cards values to percentages
+ const ks=$$('#execKpis .kpi');if(ks[4]&&discount!=null){ks[4].querySelector('.k-value').textContent=pct(safe(discount,cs));ks[4].querySelector('.k-meta').textContent='مبلغ تخفیف ÷ فروش خالص'}if(ks[5]&&returns!=null){ks[5].querySelector('.k-value').textContent=pct(safe(returns,gross));ks[5].querySelector('.k-meta').textContent='برگشتی ÷ فروش قبل از برگشتی'}
+ renderMonthlyTrend();renderGrowthContribution();renderHeatmap('#brandHeatmap','brand',state.heatMetric);renderMovers();renderStory();
+}"""
+new_overview="""function renderOverview(){
+ const py=previousYear(),cm=comparableMonths(),actual=filtered(state.year,selectedMonths()),compCur=filtered(state.year,cm.length?cm:selectedMonths()),pre=py?filtered(py,cm):[];
+ const cs=sum(actual,F.sales),ccs=sum(compCur,F.sales),ps=sum(pre,F.sales),cq=sum(actual,F.qty),ccq=sum(compCur,F.qty),pq=sum(pre,F.qty),cw=sum(actual,F.weight),ccw=sum(compCur,F.weight),pw=sum(pre,F.weight),cv=cw?cs/cw:0,ccv=ccw?ccs/ccw:0,pv=pw?ps/pw:0;
+ const discount=sourceHas(F.discount)?sum(actual,F.discount):null,returns=sourceHas(F.returns)?sum(actual,F.returns):null,gross=sourceHas(F.gross)?sum(actual,F.gross):null;
+ const cmp=cm.length?(cm.length===1?cm[0]:`${cm[0]} تا ${cm.at(-1)}`):'';
+ $('#execKpis').innerHTML=[kpiActualCard('فروش خالص',cs,ccs,ps,'sales',cmp),kpiActualCard('تعداد خالص',cq,ccq,pq,'qty',cmp),kpiActualCard('وزن خالص',cw,ccw,pw,'weight',cmp),kpiActualCard('ارزش فروش هر کیلو',cv,ccv,pv,'valuekg',cmp),kpiCard('شدت تخفیف',discount!=null?safe(discount,cs):0,null,'qty',discount!=null?pctx(safe(discount,cs)):'داده ندارد'),kpiCard('نرخ برگشتی',returns!=null?safe(returns,gross):0,null,'qty',returns!=null?pctx(safe(returns,gross)):'داده ندارد')].join('');
+ const ks=$$('#execKpis .kpi');if(ks[4]&&discount!=null){ks[4].querySelector('.k-value').textContent=pct(safe(discount,cs));ks[4].querySelector('.k-meta').textContent='مبلغ تخفیف ÷ فروش خالص • شامل ماه جاری'}if(ks[5]&&returns!=null){ks[5].querySelector('.k-value').textContent=pct(safe(returns,gross));ks[5].querySelector('.k-meta').textContent='برگشتی ÷ فروش قبل از برگشتی • شامل ماه جاری'}
+ renderMonthlyTrend();renderGrowthContribution();renderHeatmap('#brandHeatmap','brand',state.heatMetric);renderMovers();renderStory();
+}"""
+s=s.replace(old_overview,new_overview)
+
+app.write_text(s,encoding="utf-8")
+print("partial latest month remains visible in current-period KPIs; YoY stays comparable")
