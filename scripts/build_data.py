@@ -31,13 +31,13 @@ CORE_COLUMNS = [
     "ماه",
     "روز",
     "مبلغ فروش خالص پس از برگشتی",
-    "قیمت فروش به مشتری واحد کالا",
     "تعداد کالای فروش پس از برگشتی",
     "وزن فروش رفته پس از برگشتی",
 ]
 
 OPTIONAL_COLUMNS = [
     "مبلغ فروش خالص",
+    "قیمت فروش به مشتری واحد کالا",
     "تعداد کارتن فروش رفته",
     "مبلغ تخفیفات فروش",
     "مجموع تعداد کالای فروش",
@@ -245,7 +245,12 @@ def year_meta(detail: pd.DataFrame, monthly: pd.DataFrame, source_info: dict[str
 
 def main() -> None:
     SITE_DATA.mkdir(parents=True, exist_ok=True)
-    files = sorted(RAW_DIR.glob("*.xlsx"))
+    # Only canonical yearly source files are inputs. Backups such as 1405_10mehr.xlsx
+    # may remain in raw/ without being double-counted.
+    files = sorted(
+        p for p in RAW_DIR.glob("*.xlsx")
+        if re.fullmatch(r"14\d{2}\.xlsx", p.name)
+    )
     if not files:
         raise SystemExit("هیچ فایل XLSX در raw/ پیدا نشد")
 
